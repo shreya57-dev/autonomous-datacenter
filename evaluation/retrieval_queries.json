@@ -1,0 +1,130 @@
+{
+  "queries": [
+    {
+      "query_id": "failure-unavailable-machine",
+      "text": "What should happen if a machine suddenly becomes unavailable?",
+      "expected_document_id": "server_failure_recovery",
+      "expected_chunk_id": null,
+      "known": true
+    },
+    {
+      "query_id": "failure-restore-workloads",
+      "text": "How do we restore jobs that were running on a server that just failed?",
+      "expected_document_id": "server_failure_recovery",
+      "expected_chunk_id": null,
+      "known": true
+    },
+    {
+      "query_id": "failure-not-enough-room",
+      "text": "What if spare servers cannot fit every workload from the failed machine?",
+      "expected_document_id": "server_failure_recovery",
+      "expected_chunk_id": null,
+      "known": true
+    },
+    {
+      "query_id": "capacity-free-cpu",
+      "text": "How much CPU is still free on a server that is already hosting work?",
+      "expected_document_id": "capacity_management",
+      "expected_chunk_id": null,
+      "known": true
+    },
+    {
+      "query_id": "capacity-forecast-versus-current",
+      "text": "Should a demand forecast overwrite the workload's current CPU requirement?",
+      "expected_document_id": "capacity_management",
+      "expected_chunk_id": null,
+      "known": true
+    },
+    {
+      "query_id": "capacity-when-to-replan",
+      "text": "When does a change in free capacity require a new placement proposal?",
+      "expected_document_id": "capacity_management",
+      "expected_chunk_id": null,
+      "known": true
+    },
+    {
+      "query_id": "placement-inactive-receive",
+      "text": "Can an inactive server receive a workload?",
+      "expected_document_id": "workload_placement_policy",
+      "expected_chunk_id": "workload_placement_policy:1",
+      "known": true
+    },
+    {
+      "query_id": "placement-priority-bypass",
+      "text": "Does a higher priority job skip the CPU and memory checks?",
+      "expected_document_id": "workload_placement_policy",
+      "expected_chunk_id": null,
+      "known": true
+    },
+    {
+      "query_id": "placement-who-decides",
+      "text": "For a constrained assignment, is the optimizer or the greedy scheduler authoritative?",
+      "expected_document_id": "workload_placement_policy",
+      "expected_chunk_id": null,
+      "known": true
+    },
+    {
+      "query_id": "threshold-utilization-high",
+      "text": "What should happen when resource utilization becomes too high?",
+      "expected_document_id": "resource_threshold_policy",
+      "expected_chunk_id": null,
+      "known": true
+    },
+    {
+      "query_id": "threshold-temperature-meaning",
+      "text": "Does a high temperature reading in this simulation describe a physical cooling plant?",
+      "expected_document_id": "resource_threshold_policy",
+      "expected_chunk_id": null,
+      "known": true
+    },
+    {
+      "query_id": "threshold-breach-is-not-a-move",
+      "text": "Is crossing a utilization limit by itself an order to migrate a workload?",
+      "expected_document_id": "resource_threshold_policy",
+      "expected_chunk_id": null,
+      "known": true
+    },
+    {
+      "query_id": "maintenance-status",
+      "text": "What status should a server have before a maintenance window starts?",
+      "expected_document_id": "server_maintenance",
+      "expected_chunk_id": null,
+      "known": true
+    },
+    {
+      "query_id": "maintenance-which-jobs-move",
+      "text": "Before maintenance, do we move only the jobs on that server or every job in the data center?",
+      "expected_document_id": "server_maintenance",
+      "expected_chunk_id": null,
+      "known": true
+    },
+    {
+      "query_id": "maintenance-server-returns",
+      "text": "What should we verify when a server comes back after maintenance?",
+      "expected_document_id": "server_maintenance",
+      "expected_chunk_id": null,
+      "known": true
+    },
+    {
+      "query_id": "unknown-availability-zone",
+      "text": "Which availability zone should receive this database replica?",
+      "expected_document_id": null,
+      "expected_chunk_id": null,
+      "known": false
+    },
+    {
+      "query_id": "unknown-network-topology",
+      "text": "How is the leaf-spine network cabled in this hall?",
+      "expected_document_id": null,
+      "expected_chunk_id": null,
+      "known": false
+    },
+    {
+      "query_id": "unknown-replication-lag",
+      "text": "What replication lag target applies to the primary database?",
+      "expected_document_id": null,
+      "expected_chunk_id": null,
+      "known": false
+    }
+  ]
+}
