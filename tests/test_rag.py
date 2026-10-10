@@ -1,6 +1,11 @@
 import unittest
 
-from ai.rag import RagPipeline, build_grounded_prompt
+from ai.rag import (
+    INSUFFICIENT_KNOWLEDGE_RESPONSE,
+    GroundingPolicy,
+    RagPipeline,
+    build_grounded_prompt,
+)
 from retrieval.knowledge import Chunk
 from retrieval.vector_store import SearchHit
 
@@ -40,8 +45,14 @@ class FakeLLM:
 
 
 class RagPipelineTests(unittest.TestCase):
-    def _pipeline(self, retriever: FakeRetriever, llm: FakeLLM, top_k: int = 3) -> RagPipeline:
-        return RagPipeline(retriever, llm, top_k=top_k)  # type: ignore[arg-type]
+    def _pipeline(
+        self,
+        retriever: FakeRetriever,
+        llm: FakeLLM,
+        top_k: int = 3,
+        policy: GroundingPolicy | None = None,
+    ) -> RagPipeline:
+        return RagPipeline(retriever, llm, top_k=top_k, policy=policy)  # type: ignore[arg-type]
 
     def test_question_is_retrieved_and_the_model_answer_is_returned(self) -> None:
         recovery = make_chunk("server_failure_recovery:1", "Identify workloads on the failed server.")
@@ -114,6 +125,66 @@ class RagPipelineTests(unittest.TestCase):
             self._pipeline(retriever, llm).answer_question("How much CPU is free?")
         self.assertIn("answer generation failed", str(caught.exception))
         self.assertIn("connection refused", str(caught.exception))
+
+    def test_relevant_server_failure_context_reaches_the_model(self) -> None:
+        recovery = make_chunk(
+            "server_failure_recovery:2",
+            "Identify the workloads that were running on the failed server.",
+        )
+        retriever = FakeRetriever([make_hit(recovery, score=0.69)])
+        llm = FakeLLM("Identify affected workloads, then validate a recovery plan.")
+        pipeline = self._pipeline(retriever, llm)
+
+        answer = pipeline.answer_question("What should happen when a server fails?")
+
+        self.assertEqual(answer, "Identify affected workloads, then validate a recovery plan.")
+        self.assertEqual(len(llm.prompts), 1)
+        self.assertIn("Identify the workloads that were running on the failed server.", llm.prompts[0])
+        self.assertIn("What should happen when a server fails?", llm.prompts[0])
+
+    def test_unrelated_question_does_not_call_the_model(self) -> None:
+        nearest = make_chunk(
+            "capacity_management:1",
+            "Available CPU is capacity minus the CPU already in use.",
+            document_id="capacity_management",
+            topic="available capacity",
+        )
+        retriever = FakeRetriever([make_hit(nearest, score=0.07)])
+        llm = FakeLLM("a fabricated recipe")
+
+        answer = self._pipeline(retriever, llm).answer_question("What is the recipe for chocolate cake?")
+
+        self.assertEqual(answer, INSUFFICIENT_KNOWLEDGE_RESPONSE)
+        self.assertNotIn("chocolate", answer.lower())
+        self.assertNotIn("recipe", answer.lower())
+        self.assertEqual(llm.prompts, [])
+
+    def test_policy_threshold_is_configurable(self) -> None:
+        hit = make_hit(make_chunk("capacity_management:1", "Read available capacity before placement."), score=0.5)
+        strict = FakeLLM()
+        loose = FakeLLM("Use the retrieved capacity note.")
+
+        refused = self._pipeline(
+            FakeRetriever([hit]),
+            strict,
+            policy=GroundingPolicy(min_score=0.8),
+        ).answer_question("How much CPU is free?")
+        answered = self._pipeline(
+            FakeRetriever([hit]),
+            loose,
+            policy=GroundingPolicy(min_score=0.2),
+        ).answer_question("How much CPU is free?")
+
+        self.assertEqual(refused, INSUFFICIENT_KNOWLEDGE_RESPONSE)
+        self.assertEqual(strict.prompts, [])
+        self.assertEqual(answered, "Use the retrieved capacity note.")
+        self.assertEqual(len(loose.prompts), 1)
+
+    def test_best_score_at_the_cutoff_is_sufficient(self) -> None:
+        policy = GroundingPolicy()
+        chunk = make_chunk("server_maintenance:1", "Mark the server inactive before maintenance.")
+        self.assertTrue(policy.is_sufficient([make_hit(chunk, score=policy.min_score)]))
+        self.assertFalse(policy.is_sufficient([make_hit(chunk, score=policy.min_score - 0.01)]))
 
 
 if __name__ == "__main__":
